@@ -17,7 +17,10 @@ public class AirportRepository {
     HashMap<Integer, Flight>flightDb=new HashMap<>();
 
     HashMap<Integer,Passenger>passengerDb=new HashMap<>();
-    HashMap<Integer, HashSet<Passenger>> flightPassengerDb=new HashMap<>();
+    //HashMap<Integer, HashSet<Passenger>> flightPassengerDb=new HashMap<>();
+    HashMap<Integer,List<Integer>> flightToPassengerDb = new HashMap<>();
+    HashSet<Integer> bookedPassenger=new HashSet<>();
+
 
     public String addAirport(Airport airport){
 
@@ -29,128 +32,153 @@ public class AirportRepository {
     }
     public String getLargestAirportName(){
 
-        int maxNoOfTerminals=0;
-        String largestAirport="";
-        for(Airport airport:airportDb.values()){
-            if(airport.getNoOfTerminals() > maxNoOfTerminals){
-                maxNoOfTerminals= airport.getNoOfTerminals();
-                largestAirport=airport.getAirportName();
-            }else if(airport.getNoOfTerminals() == maxNoOfTerminals){
-                if(airport.getAirportName().compareTo(largestAirport) < 0){
-                    largestAirport=airport.getAirportName();
-                }
+        List<String> list=new ArrayList<>();
+        int max=Integer.MIN_VALUE;
+        for(Airport air:airportDb.values()){
+            if(air.getNoOfTerminals()>max){
+                max= air.getNoOfTerminals();
             }
         }
-
-        return largestAirport;
+        for(Airport air:airportDb.values()){
+            if(air.getNoOfTerminals()==max){
+                list.add(air.getAirportName());
+            }
+        }
+        if(list.size()>1)
+            Collections.sort(list);
+        return list.get(0);
     }
 
     public double getShortestDurationOfPossibleBetweenTwoCities(City fromCity, City toCity){
 
-        double duration=Integer.MAX_VALUE;
-        for(Flight flight:flightDb.values()){
-            if(flight.getFromCity() == fromCity && flight.getToCity() == toCity){
-                Math.min(duration,duration=flight.getDuration());
+        double shortest=Integer.MAX_VALUE;
+        for(Flight f:flightDb.values()){
+            if(f.getFromCity()==fromCity && f.getToCity()==toCity){
+                shortest=Math.min(shortest,f.getDuration());
             }
         }
-        if(duration == Integer.MAX_VALUE)
+        if(shortest==Integer.MAX_VALUE){
             return -1;
-
-        return duration;
+        }
+        return shortest;
     }
 
     public int getNumberOfPeopleOn( Date date, String airportName){
-        if(!airportDb.containsKey(airportName))
+
+        Airport airport = airportDb.get(airportName);
+        if(Objects.isNull(airport)){
             return 0;
-
-        Airport airport=airportDb.get(airportName);
-        City cityAirport=airport.getCity();
-
-        int count=0;
-
-        for(Flight flight:flightDb.values()){
-            Date flightDate=flight.getFlightDate();
-            if(flightDate == date && flight.getToCity() == cityAirport )
-                count++;
         }
+        City city = airport.getCity();
+        int count = 0;
+        for(Flight flight:flightDb.values()){
+            if(date.equals(flight.getFlightDate()))
+                if(flight.getToCity().equals(city) || flight.getFromCity().equals(city)){
 
-
-
+                    int flightId = flight.getFlightId();
+                    count = count + flightToPassengerDb.get(flightId).size();
+                }
+        }
         return count;
+
     }
     public int calculateFlightFare(Integer flightId){
 
-        Flight flight=flightDb.get(flightId);
+       /* Flight flight=flightDb.get(flightId);
         int fare=3000 + flight.getTicketsBooked() * 50 ;
 
 
-        return fare;
+        return fare;*/
+        return 3000+(flightToPassengerDb.get(flightId).size()*50);
+
     }
 
 
     public String bookATicket(Integer flightId,Integer passengerId){
 
-        if(!(flightPassengerDb.containsKey(flightId)))
-            return "Fail";
-        Passenger passenger=passengerDb.get(passengerId);
-        if(flightPassengerDb.get(flightId).size() > flightDb.get(flightId).getMaxCapacity() || flightPassengerDb.containsValue(passenger))
-            return "Fail";
+        if(Objects.nonNull(flightToPassengerDb.get(flightId)) &&
+                (flightToPassengerDb.get(flightId).size() < flightDb.get(flightId).getMaxCapacity())){
 
 
-        HashSet<Passenger>passengerList=flightPassengerDb.get(flightId);
-        passengerList.add(passengerDb.get(passengerId));
+            List<Integer> passengers =  flightToPassengerDb.get(flightId);
 
-        int ticketsBooked=flightDb.get(flightId).getTicketsBooked();
-        flightDb.get(flightId).setTicketsBooked(ticketsBooked+1);
+            if(passengers.contains(passengerId)){
+                return "FAILURE";
+            }
 
-        return "Successful";
+            passengers.add(passengerId);
+            flightToPassengerDb.put(flightId,passengers);
+            return "SUCCESS";
+        }
+        else if(Objects.isNull(flightToPassengerDb.get(flightId))){
+            flightToPassengerDb.put(flightId,new ArrayList<>());
+            List<Integer> passengers =  flightToPassengerDb.get(flightId);
+
+            if(passengers.contains(passengerId)){
+                return "FAILURE";
+            }
+
+            passengers.add(passengerId);
+            flightToPassengerDb.put(flightId,passengers);
+            return "SUCCESS";
+
+        }
+        return "FAILURE";
     }
 
     public String cancelATicket(Integer flightId,Integer passengerId){
 
-        HashSet<Passenger>passengerList=flightPassengerDb.get(flightId);
-        Passenger passenger=passengerDb.get(passengerId);
+        List<Integer> passengers = flightToPassengerDb.get(flightId);
+        if(passengers == null)
+            return "FAILURE";
 
-        if(!(flightPassengerDb.containsKey(flightId)) || passengerList.contains(passenger)){
-            return "Fail";
+        if(passengers.contains(passengerId)){
+            passengers.remove(passengerId);
+            return "SUCCESS";
         }
-
-        passengerList.remove(passenger);
-
-        return "Successful";
+        return "FAIL";
     }
 
     public int countOfBookingsDoneByPassengerAllCombined(Integer passengerId){
 
         int count=0;
-        for(HashSet<Passenger> passengerList: flightPassengerDb.values()){
-            Passenger passenger=passengerDb.get(passengerId);
-            if(passengerList.contains(passenger))
-                count++;
+        for(List<Integer> list:flightToPassengerDb.values()){
+            for(int x:list){
+                if(x==passengerId){
+                    count++;
+                }
+            }
         }
         return count;
     }
 
     public String addFlight(Flight flight){
 
-        int key=flight.getFlightId();
+        /*int key=flight.getFlightId();
         flightDb.put(key,flight);
 
-        return "Successful";
+        return "Successful";*/
+
+        flightDb.put(flight.getFlightId(),flight);
+        //Return a "SUCCESS" message string after adding a flight.
+        return "SUCCESS";
     }
 
     public String getAirportNameFromFlightId(Integer flightId){
 
-        if(flightDb.containsKey(flightId)) {
-            Flight flight = flightDb.get(flightId);
-            City airportName = flight.getFromCity();
-            return airportName.toString();
+        if (flightDb.containsKey(flightId)) {
+            City city = flightDb.get(flightId).getFromCity();
+            for (Airport airport : airportDb.values()) {
+                if (airport.getCity().equals(city)) {
+                    return airport.getAirportName();
+                }
+            }
         }
-
         return null;
     }
 
     public int calculateRevenueOfAFlight(Integer flightId){
+
 
         Flight flight=flightDb.get(flightId);
         int tickets=flight.getTicketsBooked();
@@ -161,6 +189,8 @@ public class AirportRepository {
 
 
         return revenue;
+
+        //return (flightToPassengerDb.get(flightId).size() * (flightToPassengerDb.get(flightId).size() - 1))*25 + 3000*flightToPassengerDb.get(flightId).size() ;
     }
 
     public String addPassenger(Passenger passenger){
