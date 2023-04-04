@@ -139,7 +139,7 @@ public class AirportRepository {
             passengers.remove(passengerId);
             return "SUCCESS";
         }
-        return "FAIL";
+        return "FAILURE";
     }
 
     public int countOfBookingsDoneByPassengerAllCombined(Integer passengerId){
