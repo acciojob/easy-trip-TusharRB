@@ -24,11 +24,14 @@ public class AirportRepository {
 
     public String addAirport(Airport airport){
 
-        String key = airport.getAirportName();
+        /*String key = airport.getAirportName();
 
         airportDb.put(key,airport);
 
-        return "Airport Added Successfully";
+        return "Airport Added Successfully";*/
+
+        airportDb.put(airport.getAirportName(),airport);
+        return "SUCCESS";
     }
     public String getLargestAirportName(){
 
@@ -160,7 +163,6 @@ public class AirportRepository {
         return "Successful";*/
 
         flightDb.put(flight.getFlightId(),flight);
-        //Return a "SUCCESS" message string after adding a flight.
         return "SUCCESS";
     }
 
@@ -195,12 +197,12 @@ public class AirportRepository {
 
     public String addPassenger(Passenger passenger){
 
-        //Add a passenger to the database
-        //And return a "SUCCESS" message if the passenger has been added successfully.
-        int key = passenger.getPassengerId();
+        /*int key = passenger.getPassengerId();
 
         passengerDb.put(key,passenger);
 
-        return "Successful";
+        return "Successful";*/
+        passengerDb.put(passenger.getPassengerId(),passenger);
+        return "SUCCESS";
     }
 }
