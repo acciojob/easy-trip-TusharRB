@@ -180,7 +180,7 @@ public class AirportRepository {
     public int calculateRevenueOfAFlight(Integer flightId){
 
 
-        Flight flight=flightDb.get(flightId);
+        /*Flight flight=flightDb.get(flightId);
         int tickets=flight.getTicketsBooked();
         int revenue=0;
         for(int i=0 ;i < tickets ; i++){
@@ -188,9 +188,9 @@ public class AirportRepository {
         }
 
 
-        return revenue;
+        return revenue;*/
 
-        //return (flightToPassengerDb.get(flightId).size() * (flightToPassengerDb.get(flightId).size() - 1))*25 + 3000*flightToPassengerDb.get(flightId).size() ;
+        return (flightToPassengerDb.get(flightId).size() * (flightToPassengerDb.get(flightId).size() - 1))*25 + 3000*flightToPassengerDb.get(flightId).size() ;
     }
 
     public String addPassenger(Passenger passenger){
